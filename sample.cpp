@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
 
     // // [TODO] Read the query point from query_file, do kNN using the kdTree and output the answer to results.txt
     infile.open(query_file);
-    infile >> D >> N1;
+    infile >> D >> N2;
 
     double query_points[N2][D];
     for ( int i = 0; i < N2; i++) {
@@ -192,5 +192,6 @@ int main(int argc, char* argv[]) {
 	// }
 
     // Convey to parent that results.txt is ready by sending "1" on stdout | Timer will stop now and this process will be killed
+    cerr << "results generated" << endl;
     cout << 1 << endl;
 }
