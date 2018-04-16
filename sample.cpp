@@ -16,28 +16,46 @@ struct Node {
     vector<double> r_min;
     Node *left, *right;
 
-    double point_l2(double *arr) {
+    double mbr_dist(vector<double>& arr) {
         double dist = 0;
         for (int i = 0; i < D; i++) {
-            dist += (point[i] - arr[i])*(point[i] - arr[i]);
+            if (arr[i] < r_min[i]) {
+                dist += pow((r_min[i] - arr[i]), 2);
+            }
+            else if (r_max < arr[i]) {
+                dist += pow((arr[i] - r_max[i]), 2);
+            }
+            else {
+                continue;
+            }
         }
         dist = sqrt(dist);
         return dist;
     }
 };
 
-class max_heap_obj {
-    struct Node* node;
+struct max_heap_obj {
+    vector<double> point;
     double mbr_dist;
 };
+
+struct max_heap_obj* new_max_heap_obj(double *arr, double mbr_dist) {
+    struct max_heap_obj* temp = new max_heap_obj;
+
+    for (int i = 0; i < D; i++) {
+        temp->point.push_back(arr[i]);
+    }
+
+    temp->mbr_dist = mbr_dist;
+}
 
 struct Node* newNode(double *arr) {
     struct Node* temp = new Node;
 
-    for ( int i = 0 ; i < D; i++) {
+    for (int i = 0 ; i < D; i++) {
         temp->point.push_back(arr[i]);
-        temp->r_max.push_back(-10);
-        temp->r_min.push_back(10);
+        temp->r_max.push_back(arr[i]);
+        temp->r_min.push_back(arr[i]);
     }
 
     temp->left = temp->right = NULL;
@@ -71,40 +89,33 @@ Node* insert(Node *root, double point[], int depth){
     return root;
 }
 
-// Node* constructKdTree(double data_points[][20],int n,int dim,Node* root){
-//
-//     for(int i=0;i<n;i++){
-//         root = insert(root,data_points[i],0,dim);
-//     }
-//
-//     return root;
-// }
-//
-//
-//
-// struct greaterthan {
-//   bool operator()(const node& lhs, const node& rhs) const
-//   {
-//     return lhs.point < rhs.point;
-//   }
-// };
-//
-// struct lesserthan {
-//   bool operator()(const node& lhs, const node& rhs) const
-//   {
-//     return lhs.point > rhs.point;
-//   }
-// };
-//
-// int distance(double[] a, double[] b,int d_q) {
-//    double sum=0;
-//    for(int i=0;i<d_q;i++){
-// 	   sum = sum+ pow((a[i]-b[i]),2);
-// 	   }
-// 	sum = pow(sum,0.5);
-//
-// 	return sum;
-// }
+int distance(double *a, double *b) {
+    double dist = 0;
+    for (int i = 0; i < D; i++) {
+        sum = sum + pow((a[i] - b[i]),2);
+    }
+	sum = sqrt(sum,0.5);
+
+	return dist;
+}
+
+struct max_heap_comp {
+    bool operator() (const max_heap_obj& p1, const max_heap_obj& p2) const {
+      return p1.mbr_dist < p2.mbr_dist;
+    }
+};
+
+struct min_heap_comp {
+    vector<double> p;
+    min_heap_comp(double *arr) {
+        for (int i = 0; i < D; i++) {
+            p.push_back(arr[i]);
+        }
+    }
+    bool operator() (const Node& n1, const Node& n2) const {
+        return n1.mbr_dist(p) > n2.mbr_dist(p);
+    }
+};
 
 
 int main(int argc, char* argv[]) {
@@ -158,38 +169,25 @@ int main(int argc, char* argv[]) {
     }
     infile.close();
 
-    // priority_queue <Node, vector<Node>, > max_heap;
-	// //max_heap(root);
-	// priority_queue<node,vector<node>, lessthan> min_heap;
-	// min_heap(root);
-	// //generate k random points of d_q dimension
-    //
-	// //double x= rand() % 2.0 +  2.0;
-	// for(int i=0;i<k;i++){
-	// 	double[] pt;
-	// 	for(intj=0;j<d_q;j++){
-	// 		pt[j]= rand() % 2.0 +  2.5;
-	// 	}
-	// 	double x = distance(query_point,pt,d_q);
-	// 	max_heap.push(x,pt);
-    //
-	// }
+    priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> max_heap;
+    priority_queue<Node, vector<Node>, min_heap_comp> min_heap;
 
-	// while(distance(min_heap.top(),query_point,d_q)< max_heap.top()){
-	// 	Node n = min_heap.top();
-	// 	min_heap.pop();
-	// 	if(n->left!=NULL || n->right!=NULL){
-	// 		if(n->left!=NULL){
-	// 		min_heap.push(n->left);
-	// 		}
-	// 		if(n->right!=NULL){
-	// 		min_heap.push(n->right);
-	// 		}
-	// 	}
-	// 	else if(n->left==NULL && n->right==NULL){
-	// 		max_heap.push(distance(n,query_point,d_q),n);
-	// 	}
-	// }
+    //generate k random points of d_q dimension
+	//double x= rand() % 2.0 +  2.0;
+	for (int i = 0; i < k; i++) {
+		double[] pt;
+		for(intj=0;j<d_q;j++){
+			pt[j]= rand() % 2.0 +  2.5;
+		}
+		double x = distance(query_point,pt,d_q);
+		max_heap.push(x,pt);
+	}
+
+	for (int i = 0; i < N2; i++) {
+        priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> q_max_heap = max_heap;
+        priority_queue<Node, vector<Node>, min_heap_comp> q_min_heap = min_heap;
+
+    }
 
     // Convey to parent that results.txt is ready by sending "1" on stdout | Timer will stop now and this process will be killed
     cerr << "results generated" << endl;
