@@ -90,9 +90,9 @@ Node* insert(Node *root, double point[], int depth){
         return root;
     }
 
-    int split_dim = depth % D;
+    unsigned cut = depth % D;
 
-    if(point[split_dim] < root->point[split_dim]) {
+    if(point[cut] < root->point[cut]) {
         for (int i = 0; i < D; i++) {
             root->r_max[i] = max(root->r_max[i], point[i]);
             root->r_min[i] = min(root->r_min[i], point[i]);
@@ -139,19 +139,17 @@ int main(int argc, char* argv[]) {
 
     // [TODO] Construct kdTree using dataset_file here
 
-    ifstream infile;
-    infile.open(dataset_file);
-    infile >> D >> N1;
+    ifstream data;
+    data.open(dataset_file);
+    data >> D >> N1;
 
     double data_points[N1][D];
     for ( int i = 0; i < N1; i++) {
         for ( int j = 0; j < D; j++) {
-            infile >> data_points[i][j];
-            cerr<<data_points[i][j]<<" ";
+            data >> data_points[i][j];
         }
-        cerr<<endl;
     }
-    infile.close();
+    data.close();
 
     Node *root = NULL;
     // root = constructKdTree(data_points,n,dim,root);
@@ -171,18 +169,16 @@ int main(int argc, char* argv[]) {
     // cerr << dataset_file << " " << query_file << " " << k << endl;
 
     // // [TODO] Read the query point from query_file, do kNN using the kdTree and output the answer to results.txt
-    infile.open(query_file);
-    infile >> D >> N2;
+    data.open(query_file);
+    data >> D >> N2;
 
     double query_points[N2][D];
     for ( int i = 0; i < N2; i++) {
         for ( int j = 0; j < D; j++) {
-            infile >> query_points[i][j];
-            cerr<<query_points[i][j]<<" ";
+            data >> query_points[i][j];
         }
-        cerr<<endl;
     }
-    infile.close();
+    data.close();
 
 
 	for (int q = 0; q < N2; q++) {
@@ -193,7 +189,7 @@ int main(int argc, char* argv[]) {
         priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> max_heap;
         priority_queue<Node, vector<Node>, min_heap_comp> min_heap;
         double ddd = root->mbr_dist(query_point);
-        min_heap_obj* min_temp = new_min_heap_obj(root, ddd);
+        struct min_heap_obj* min_temp = new_min_heap_obj(root, ddd);
         min_heap.push(min_temp);
         // for (int i = 0; i < k; i++) {
     	// 	vector<double> rand_points;
