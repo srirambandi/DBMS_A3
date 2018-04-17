@@ -76,8 +76,8 @@ struct min_heap_obj* new_min_heap_obj(Node *node, double mbr_dist) {
     return temp;
 };
 
-bool isLeaf(min_heap_obj *obj) {
-    if (obj->node->left == NULL && obj->node->right == NULL) {
+bool isLeaf(min_heap_obj &obj) {
+    if (obj.node->left == NULL && obj.node->right == NULL) {
         return true;
     }
     return false;
@@ -115,20 +115,20 @@ double distance(vector<double>& a, vector<double>& b) {
     for (int i = 0; i < D; i++) {
         dist = dist + pow((a[i] - b[i]),2);
     }
-	dist = sqrt(dist);
+    dist = sqrt(dist);
 
-	return dist;
+    return dist;
 }
 
 struct max_heap_comp {
-    bool operator() (const max_heap_obj *p1, const max_heap_obj *p2) const {
-      return p1->point_dist < p2->point_dist;
+    bool operator() (const max_heap_obj &p1, const max_heap_obj &p2) const {
+        return p1.point_dist < p2.point_dist;
     }
 };
 
 struct min_heap_comp {
-    bool operator() (const min_heap_obj *n1, const min_heap_obj *n2) const {
-        return n1->mbr_dist > n2->mbr_dist;
+    bool operator() (const min_heap_obj &n1, const min_heap_obj &n2) const {
+        return n1.mbr_dist > n2.mbr_dist;
     }
 };
 
@@ -181,49 +181,51 @@ int main(int argc, char* argv[]) {
     data.close();
 
 
-	for (int q = 0; q < N2; q++) {
+    for (int q = 0; q < N2; q++) {
         vector<double> query_point;
         for (int i = 0; i < D; i++) {
             query_point.push_back(query_points[q][i]);
         }
         priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> max_heap;
-        priority_queue<Node, vector<Node>, min_heap_comp> min_heap;
+        priority_queue<min_heap_obj, vector<min_heap_obj>, min_heap_comp> min_heap;
         double ddd = root->mbr_dist(query_point);
         struct min_heap_obj* min_temp = new_min_heap_obj(root, ddd);
-        min_heap.push(min_temp);
-        // for (int i = 0; i < k; i++) {
-    	// 	vector<double> rand_points;
-    	// 	for (int j = 0; j < D; j++) {
-    	// 		rand_points.push_back((rand()%2 + 2.5));
-    	// 	}
-    	// 	double point_dist = distance(query_point, rand_points);
-        //     max_heap_obj* max_temp = new_max_heap_obj(rand_points, point_dist);
-    	// 	max_heap.push(temp);
-    	// }
-        //
-        // while (!min_heap.empty() && min_heap.top().mbr_dist > max_heap.top().point_dist) {
-        //     double dd = max_heap.top().point_dist;
-        //     min_heap_obj* temp1 = min_heap.top();
-        //     if (!isLeaf(temp1) && temp1.mbr_dist > dd) {
-        //         break;
-        //     }
-        //     else {
-        //         if (isLeaf(temp1) && temp1.mbr_dist < dd) {
-        //             max_heap_obj* temp2 = new_max_heap_obj(temp1->node->point, temp1->mbr_dist);
-        //             max_heap.push(temp2);
-        //         }
-        //         else {
-        //             min_heap_obj* temp3 = new_min_heap_obj(temp->node->left, query_point);
-        //             if (temp3->mbr_dist < dd) {
-        //                 min_heap.push(temp3);
-        //             }
-        //             temp3 = new_min_heap_obj(temp->node->right, query_point);
-        //             if (temp3->mbr_dist < dd) {
-        //                 min_heap.push(temp3);
-        //             }
-        //         }
-        //     }
-        // }
+        min_heap.push(*min_temp);
+        for (int i = 0; i < k; i++) {
+            vector<double> rand_points;
+            for (int j = 0; j < D; j++) {
+                rand_points.push_back((rand()%2 + 2.5));
+            }
+            double point_dist = distance(query_point, rand_points);
+            max_heap_obj* max_temp = new_max_heap_obj(rand_points, point_dist);
+            max_heap.push(*max_temp);
+        }
+
+        while (!min_heap.empty() && min_heap.top().mbr_dist > max_heap.top().point_dist) {
+            double dd = max_heap.top().point_dist;
+            min_heap_obj temp1 = min_heap.top();
+            if (!isLeaf(temp1) && temp1.mbr_dist > dd) {
+                break;
+            }
+            else {
+                if (isLeaf(temp1) && temp1.mbr_dist < dd) {
+                    max_heap_obj* temp2 = new_max_heap_obj(temp1.node->point, temp1.mbr_dist);
+                    max_heap.push(*temp2);
+                }
+                else {
+                    ddd = temp1.node->left->mbr_dist(query_point);
+                    min_heap_obj* temp3 = new_min_heap_obj(temp1.node->left, ddd);
+                    if (temp3->mbr_dist < dd) {
+                        min_heap.push(*temp3);
+                    }
+                    ddd = temp1.node->right->mbr_dist(query_point);
+                    temp3 = new_min_heap_obj(temp1.node->right, ddd);
+                    if (temp3->mbr_dist < dd) {
+                        min_heap.push(*temp3);
+                    }
+                }
+            }
+        }
     }
 
     // Convey to parent that results.txt is ready by sending "1" on stdout | Timer will stop now and this process will be killed
