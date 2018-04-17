@@ -180,7 +180,12 @@ int main(int argc, char* argv[]) {
     }
     data.close();
 
+    ofstream results;
+    results.open("results.txt");
+
     double ddd;
+    vector<vector<double> > result_vec;
+    vector<vector<double> >::iterator it;
     vector<double> query_point,rand_points;
     min_heap_obj* min_temp;
     max_heap_obj* max_temp;
@@ -199,7 +204,7 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < k; i++) {
             rand_points.clear();
             for (int j = 0; j < D; j++) {
-                rand_points.push_back((rand()%2 + 100));
+                rand_points.push_back(((double)rand()/RAND_MAX + 2.0));
             }
             double point_dist = distance(query_point, rand_points);
             max_temp = new_max_heap_obj(rand_points, point_dist);
@@ -217,8 +222,11 @@ int main(int argc, char* argv[]) {
             else {
                 if (isLeaf(temp1) && temp1.mbr_dist < dd) {
                     cerr << "is leaf" <<endl;
-                    max_temp = new_max_heap_obj(temp1.node->point, temp1.mbr_dist);
-                    max_heap.push(*max_temp);
+                    if (temp1.mbr_dist < dd) {
+                        max_temp = new_max_heap_obj(temp1.node->point, temp1.mbr_dist);
+                        max_heap.pop();
+                        max_heap.push(*max_temp);
+                    }
                 }
                 else {
                     // cerr << "not leaf" <<endl;
@@ -246,11 +254,37 @@ int main(int argc, char* argv[]) {
                             min_heap.push(*temp2);
                         }
                     }
+
+                    ddd = distance(temp1.node->point, query_point);
+                    if (ddd < dd) {
+                        max_temp = new_max_heap_obj(temp1.node->point, ddd);
+                        max_heap.pop();
+                        max_heap.push(*max_temp);
+                    }
                 }
             }
             min_heap.pop();
         }
+
+
+        cerr << "write start " << max_ << endl;
+        it = result_vec.begin();
+        while (!max_heap.empty()) {
+            cerr << "here "<<endl;
+            result_vec.insert(it, max_heap.top().point);
+            it = result_vec.begin();
+            max_heap.pop();
+        }
+
+        for (int i = 0; i < N2*k; i++) {
+            for (int j = 0; j < D; j++) {
+                results << result_vec[i][j] << " ";
+            }
+            results << endl;
+        }
+        cerr << "write end" << endl;
     }
+    results.close();
 
     // Convey to parent that results.txt is ready by sending "1" on stdout | Timer will stop now and this process will be killed
     cerr << "results generated" << endl;

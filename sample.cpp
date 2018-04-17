@@ -153,11 +153,9 @@ int main(int argc, char* argv[]) {
 
     Node *root = NULL;
     // root = constructKdTree(data_points,n,dim,root);
-    cerr << "start construction" << endl;
     for ( int i = 0; i < N1; i++) {
         root = insert(root, data_points[i], 0);
     }
-    cerr << "end construction" << endl;
 
     // Request name/path of query_file from parent by just sending "0" on stdout
     cout << 0 << endl;
@@ -166,7 +164,6 @@ int main(int argc, char* argv[]) {
     char* query_file = new char[100];
     int k;
     cin >> query_file >> k;
-    // cerr << dataset_file << " " << query_file << " " << k << endl;
 
     // // [TODO] Read the query point from query_file, do kNN using the kdTree and output the answer to results.txt
     data.open(query_file);
@@ -180,97 +177,136 @@ int main(int argc, char* argv[]) {
     }
     data.close();
 
+
+    //Sequential scan
     double ddd;
-    vector<double> query_point,rand_points;
-    min_heap_obj* min_temp;
+    vector<double> query_point,rand_points, curr_point, curr_point_heap;
     max_heap_obj* max_temp;
     priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> max_heap;
-    priority_queue<min_heap_obj, vector<min_heap_obj>, min_heap_comp> min_heap;
     for (int q = 0; q < N2; q++) {
         query_point.clear();
         for (int i = 0; i < D; i++) {
             query_point.push_back(query_points[q][i]);
         }
         max_heap = priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp>();
-        min_heap = priority_queue<min_heap_obj, vector<min_heap_obj>, min_heap_comp>();
-        ddd = root->mbr_dist(query_point);
-        min_temp = new_min_heap_obj(root, ddd);
-        min_heap.push(*min_temp);
         for (int i = 0; i < k; i++) {
             rand_points.clear();
             for (int j = 0; j < D; j++) {
-                rand_points.push_back(((double)rand()/RAND_MAX + 2.0));
+                rand_points.push_back(data_points[i][j]);
             }
             double point_dist = distance(query_point, rand_points);
             max_temp = new_max_heap_obj(rand_points, point_dist);
             max_heap.push(*max_temp);
         }
-        cerr << root->point[0] << " " << root->point[1] << endl;
-        cerr << min_heap.top().mbr_dist << " " << max_heap.top().point_dist << endl;
-        while (!min_heap.empty() && min_heap.top().mbr_dist < max_heap.top().point_dist) {
-            cerr<< "loop" <<endl;
-            double dd = max_heap.top().point_dist;
-            min_heap_obj temp1 = min_heap.top();
-            if (!isLeaf(temp1) && temp1.mbr_dist > dd) {
-                break;
-            }
-            else {
-                if (isLeaf(temp1) && temp1.mbr_dist < dd) {
-                    cerr << "is leaf" <<endl;
-                    if (temp1.mbr_dist < dd) {
-                        max_temp = new_max_heap_obj(temp1.node->point, temp1.mbr_dist);
-                        max_heap.pop();
-                        max_heap.push(*max_temp);
-                    }
-                }
-                else {
-                    // cerr << "not leaf" <<endl;
-                    // Node* curr_node = temp1.node->right;
-                    // cerr << root << " " << temp1.node << " " << curr_node <<endl;
-                    // for (int i = 0; i < D; i++) {
-                    //     cerr << "reached" <<endl;
-                    //     cerr << curr_node->point[i] << " ";
-                    // }
-                    // cerr << endl;
-                    min_heap_obj* temp2;
-                    if (temp1.node->left != NULL) {
-                        ddd = temp1.node->left->mbr_dist(query_point);
-                        cerr << ddd <<endl;
-                        temp2 = new_min_heap_obj(temp1.node->left, ddd);
-                        if (temp2->mbr_dist < dd) {
-                            min_heap.push(*temp2);
-                        }
-                    }
 
-                    if (temp1.node->right != NULL) {
-                        ddd = temp1.node->right->mbr_dist(query_point);
-                        temp2 = new_min_heap_obj(temp1.node->right, ddd);
-                        if (temp2->mbr_dist < dd) {
-                            min_heap.push(*temp2);
-                        }
-                    }
-
-                    ddd = distance(temp1.node->point, query_point);
-                    if (ddd < dd) {
-                        max_temp = new_max_heap_obj(temp1.node->point, ddd);
-                        max_heap.pop();
-                        max_heap.push(*max_temp);
-                    }
-                }
+        for (int i = k; i < N1; i++) {
+            curr_point.clear();
+            for (int j = 0; j < D; j++) {
+                curr_point.push_back(data_points[i][j]);
             }
-            min_heap.pop();
-        }
-        cerr << "===============" << endl;
-        while (!max_heap.empty()) {
-            cerr << max_heap.top().point_dist << " : ";
-            for (int i = 0; i < D; i++) {
-                cerr << max_heap.top().point[i] << " ";
+            curr_point_heap.clear();
+            curr_point_heap = max_heap.top().point;
+            ddd = distance(query_point, curr_point_heap);
+            if (distance(query_point, curr_point) < ddd) {
+                max_heap.pop();
+                double point_dist = distance(query_point, curr_point);
+                max_temp = new_max_heap_obj(curr_point, point_dist);
+                max_heap.push(*max_temp);
             }
-            cerr << endl;
-            max_heap.pop();
         }
-        cerr << "===============" << endl;
     }
+
+
+    // ofstream results;
+    // results.open("results.txt");
+    //
+    // double ddd;
+    // vector<double> query_point,rand_points;
+    // min_heap_obj* min_temp;
+    // max_heap_obj* max_temp;
+    // priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp> max_heap;
+    // priority_queue<min_heap_obj, vector<min_heap_obj>, min_heap_comp> min_heap;
+    // for (int q = 0; q < N2; q++) {
+    //     query_point.clear();
+    //     for (int i = 0; i < D; i++) {
+    //         query_point.push_back(query_points[q][i]);
+    //     }
+    //     max_heap = priority_queue<max_heap_obj, vector<max_heap_obj>, max_heap_comp>();
+    //     min_heap = priority_queue<min_heap_obj, vector<min_heap_obj>, min_heap_comp>();
+    //     ddd = root->mbr_dist(query_point);
+    //     min_temp = new_min_heap_obj(root, ddd);
+    //     min_heap.push(*min_temp);
+    //     for (int i = 0; i < k; i++) {
+    //         rand_points.clear();
+    //         for (int j = 0; j < D; j++) {
+    //             rand_points.push_back(((double)rand()/RAND_MAX + 2.0));
+    //         }
+    //         double point_dist = distance(query_point, rand_points);
+    //         max_temp = new_max_heap_obj(rand_points, point_dist);
+    //         max_heap.push(*max_temp);
+    //     }
+    //
+    //     while (!min_heap.empty() && min_heap.top().mbr_dist < max_heap.top().point_dist) {
+    //         double dd = max_heap.top().point_dist;
+    //         min_heap_obj temp1 = min_heap.top();
+    //         if (!isLeaf(temp1) && temp1.mbr_dist > dd) {
+    //             break;
+    //         }
+    //         else {
+    //             if (isLeaf(temp1) && temp1.mbr_dist < dd) {
+    //                 if (temp1.mbr_dist < dd) {
+    //                     max_temp = new_max_heap_obj(temp1.node->point, temp1.mbr_dist);
+    //                     max_heap.pop();
+    //                     max_heap.push(*max_temp);
+    //                 }
+    //             }
+    //             else {
+    //                 // cerr << "not leaf" <<endl;
+    //                 // Node* curr_node = temp1.node->right;
+    //                 // cerr << root << " " << temp1.node << " " << curr_node <<endl;
+    //                 // for (int i = 0; i < D; i++) {
+    //                 //     cerr << "reached" <<endl;
+    //                 //     cerr << curr_node->point[i] << " ";
+    //                 // }
+    //                 // cerr << endl;
+    //                 min_heap_obj* temp2;
+    //                 if (temp1.node->left != NULL) {
+    //                     ddd = temp1.node->left->mbr_dist(query_point);
+    //                     temp2 = new_min_heap_obj(temp1.node->left, ddd);
+    //                     if (temp2->mbr_dist < dd) {
+    //                         min_heap.push(*temp2);
+    //                     }
+    //                 }
+    //
+    //                 if (temp1.node->right != NULL) {
+    //                     ddd = temp1.node->right->mbr_dist(query_point);
+    //                     temp2 = new_min_heap_obj(temp1.node->right, ddd);
+    //                     if (temp2->mbr_dist < dd) {
+    //                         min_heap.push(*temp2);
+    //                     }
+    //                 }
+    //
+    //                 ddd = distance(temp1.node->point, query_point);
+    //                 if (ddd < dd) {
+    //                     max_temp = new_max_heap_obj(temp1.node->point, ddd);
+    //                     max_heap.pop();
+    //                     max_heap.push(*max_temp);
+    //                 }
+    //             }
+    //         }
+    //         min_heap.pop();
+    //     }
+    //
+    //
+    //     while (!max_heap.empty()) {
+    //         for (int i = 0; i < D; i++) {
+    //             results << max_heap.top().point[i] << " ";
+    //         }
+    //         results << endl;
+    //         max_heap.pop();
+    //     }
+    // }
+    // results.close();
 
     // Convey to parent that results.txt is ready by sending "1" on stdout | Timer will stop now and this process will be killed
     cerr << "results generated" << endl;
